@@ -1,45 +1,58 @@
-name: Contribution animation
+name: Contribution landscape
 
 on:
   workflow_dispatch:
   schedule:
     - cron: "43 4 * * *"
+  push:
+    branches: [main, master]
+    paths:
+      - "README.md"
+      - ".github/workflows/contribution-snake.yml"
 
 permissions:
   contents: write
 
 concurrency:
-  group: contribution-animation
-  cancel-in-progress: false
+  group: contribution-landscape
+  cancel-in-progress: true
 
 jobs:
-  generate:
+  render:
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
-      - name: Generate
-        uses: Platane/snk/svg-only@v3
-        with:
-          github_user_name: ${{ github.repository_owner }}
-          github_token: ${{ secrets.METRICS_TOKEN || github.token }}
-          outputs: |
-            dist/github-snake.svg?color_snake=%237c3aed&color_dots=%23ebedf0,%2367e8f9,%2322d3ee,%237c3aed,%23ec4899
-            dist/github-snake-dark.svg?palette=github-dark&color_snake=%2322d3ee&color_dots=%23161b22,%2331265f,%235b3db6,%237c3aed,%23ec4899
+      - name: Checkout
+        uses: actions/checkout@v5
 
-      - name: Verify output
+      - name: Generate 3D contribution landscape
+        uses: yoshi389111/github-profile-3d-contrib@v0.9.3
+        env:
+          GITHUB_TOKEN: ${{ secrets.METRICS_TOKEN || github.token }}
+          USERNAME: ${{ github.repository_owner }}
+
+      - name: Validate generated landscape
         shell: bash
         run: |
           set -euo pipefail
-          test -s dist/github-snake.svg
-          test -s dist/github-snake-dark.svg
-          grep -q '<svg' dist/github-snake.svg
-          grep -q '<svg' dist/github-snake-dark.svg
+          test -s profile-3d-contrib/profile-night-rainbow.svg
+          test -s profile-3d-contrib/profile-season-animate.svg
+          grep -q '<svg' profile-3d-contrib/profile-night-rainbow.svg
+          grep -q '<svg' profile-3d-contrib/profile-season-animate.svg
 
-      - name: Publish output branch
-        uses: crazy-max/ghaction-github-pages@v3.1.0
-        with:
-          target_branch: output
-          build_dir: dist
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish landscape
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add profile-3d-contrib
+
+          if git diff --cached --quiet; then
+            echo "Contribution landscape is already current."
+            exit 0
+          fi
+
+          git commit -m "chore(profile): refresh contribution landscape [skip ci]"
+          git push

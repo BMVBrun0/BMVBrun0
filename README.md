@@ -142,30 +142,20 @@ Architecture decisions, PR/code review, mentoring, product ownership, incident a
   <a href="https://bmvbrun0.github.io/library.html"><strong>More authored products, screenshots and technical context</strong></a>
 </p>
 
-## GitHub activity
+## Open-source activity
 
-<sub>Public GitHub activity only. Most company and client work is kept in private repositories.</sub>
+<sub>Public GitHub activity only. Company and client repositories are mostly private.</sub>
 
-<p align="center">
-  <img src="./assets/metrics/overview.svg" alt="GitHub activity overview" width="100%">
-</p>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./assets/dashboard/activity-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="./assets/dashboard/activity-light.svg">
+  <img alt="Public GitHub activity dashboard" src="./assets/dashboard/activity-dark.svg" width="100%">
+</picture>
 
-<p align="center">
-  <img src="./assets/metrics/isocalendar.svg" alt="Full-year contribution calendar" width="100%">
-</p>
+### Contribution landscape
 
-<p align="center">
-  <img src="./assets/metrics/languages.svg" alt="Languages across public repositories" width="100%">
-</p>
-
-<details>
-<summary><strong>Contribution animation</strong></summary>
-<br>
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/BMVBrun0/BMVBrun0/output/github-snake-dark.svg">
-    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/BMVBrun0/BMVBrun0/output/github-snake.svg">
-    <img alt="GitHub contribution animation" src="https://raw.githubusercontent.com/BMVBrun0/BMVBrun0/output/github-snake.svg" width="100%">
-  </picture>
-</p>
-</details>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./profile-3d-contrib/profile-night-rainbow.svg">
+  <source media="(prefers-color-scheme: light)" srcset="./profile-3d-contrib/profile-season-animate.svg">
+  <img alt="Animated 3D contribution landscape" src="./profile-3d-contrib/profile-night-rainbow.svg" width="100%">
+</picture>

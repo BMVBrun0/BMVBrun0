@@ -1,4 +1,4 @@
-name: Profile metrics
+name: Profile dashboard
 
 on:
   workflow_dispatch:
@@ -8,127 +8,65 @@ on:
     branches: [main, master]
     paths:
       - "README.md"
+      - "scripts/profile-dashboard.mjs"
       - ".github/workflows/profile-cards.yml"
 
 permissions:
   contents: write
 
 concurrency:
-  group: profile-metrics
-  cancel-in-progress: false
+  group: profile-dashboard
+  cancel-in-progress: true
 
 jobs:
   render:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 10
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
-      - name: Overview
-        uses: lowlighter/metrics@latest
+      - name: Set up Node
+        uses: actions/setup-node@v4
         with:
-          filename: overview.svg
-          token: ${{ secrets.METRICS_TOKEN || github.token }}
-          user: ${{ github.repository_owner }}
-          template: classic
-          base: header, activity, repositories
-          base_indepth: yes
-          repositories: 100
-          repositories_affiliations: owner
-          config_display: large
-          config_timezone: America/Sao_Paulo
-          config_animations: yes
-          config_gemoji: no
-          config_twemoji: no
-          output_action: none
-          plugins_errors_fatal: yes
-          verify: yes
-          retries: 3
-          retries_delay: 30
+          node-version: 22
 
-      - name: Full-year contribution calendar
-        uses: lowlighter/metrics@latest
-        with:
-          filename: isocalendar.svg
-          token: ${{ secrets.METRICS_TOKEN || github.token }}
-          user: ${{ github.repository_owner }}
-          template: classic
-          base: ""
-          plugin_isocalendar: yes
-          plugin_isocalendar_duration: full-year
-          config_display: large
-          config_timezone: America/Sao_Paulo
-          config_animations: yes
-          config_gemoji: no
-          config_twemoji: no
-          output_action: none
-          plugins_errors_fatal: yes
-          verify: yes
-          retries: 3
-          retries_delay: 30
+      - name: Generate activity dashboard
+        env:
+          GH_TOKEN: ${{ secrets.METRICS_TOKEN || github.token }}
+          PROFILE_USERNAME: ${{ github.repository_owner }}
+        run: node scripts/profile-dashboard.mjs
 
-      - name: Public repository languages
-        uses: lowlighter/metrics@latest
-        with:
-          filename: languages.svg
-          token: ${{ secrets.METRICS_TOKEN || github.token }}
-          user: ${{ github.repository_owner }}
-          template: classic
-          base: ""
-          repositories: 100
-          repositories_affiliations: owner
-          plugin_languages: yes
-          plugin_languages_sections: most-used
-          plugin_languages_limit: 8
-          plugin_languages_details: percentage
-          plugin_languages_other: yes
-          plugin_languages_colors: rainbow
-          config_display: large
-          config_timezone: America/Sao_Paulo
-          config_animations: yes
-          config_gemoji: no
-          config_twemoji: no
-          output_action: none
-          plugins_errors_fatal: yes
-          verify: yes
-          retries: 3
-          retries_delay: 30
-
-      - name: Validate generated metrics
+      - name: Validate generated dashboard
         shell: bash
         run: |
           set -euo pipefail
-          for file in overview.svg isocalendar.svg languages.svg; do
-            test -s "/metrics_renders/$file"
-            grep -q '<svg' "/metrics_renders/$file"
-            if grep -qiE 'placeholder|mock data|something went wrong|error while' "/metrics_renders/$file"; then
+          for file in assets/dashboard/activity-dark.svg assets/dashboard/activity-light.svg; do
+            test -s "$file"
+            grep -q '<svg' "$file"
+            grep -q 'PUBLIC DEVELOPMENT SIGNAL' "$file"
+            grep -q 'Contribution field' "$file"
+            if grep -qiE 'placeholder|mock data|something went wrong|error while' "$file"; then
               echo "Invalid generated output: $file"
               exit 1
             fi
           done
 
-      - name: Publish metrics
+      - name: Publish dashboard
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p assets/metrics
-          sudo cp /metrics_renders/overview.svg assets/metrics/overview.svg
-          sudo cp /metrics_renders/isocalendar.svg assets/metrics/isocalendar.svg
-          sudo cp /metrics_renders/languages.svg assets/metrics/languages.svg
-          sudo chown -R "$(id -u):$(id -g)" assets/metrics
-
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add assets/metrics
+          git add assets/dashboard/activity-dark.svg assets/dashboard/activity-light.svg
 
           if git diff --cached --quiet; then
-            echo "Metrics are already current."
+            echo "Dashboard is already current."
             exit 0
           fi
 
-          git commit -m "chore: refresh profile metrics [skip ci]"
+          git commit -m "chore(profile): refresh activity dashboard [skip ci]"
           git push
