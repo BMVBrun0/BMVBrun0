@@ -12,39 +12,41 @@
   <a href="https://bmvbrun0.github.io/assets/docs/curriculo-en-2026.pdf"><img src="./assets/badge-resume.svg" alt="Resume EN" height="36"></a>
 </p>
 
-<p align="center">
-  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=20&pause=1100&color=22D3EE&center=true&vCenter=true&random=false&width=900&lines=Mobile+Engineering+%C2%B7+React+Native+%2F+Expo;Full+Stack+%C2%B7+React+%2F+Next.js+%C2%B7+Node.js+%C2%B7+Laravel;Product+Engineering+%C2%B7+Architecture+%C2%B7+Reliability;Build+%C2%B7+Ship+%C2%B7+Observe+%C2%B7+Improve" alt="Typing introduction" />
-</p>
+## About
+
+I build production software across **mobile, web and backend**, with 8+ years working on products, APIs, data and the infrastructure around them. My deepest specialization is **mobile engineering with React Native / Expo**; on the web and backend I work extensively with **React / Next.js, TypeScript / Node.js and PHP / Laravel**.
+
+I currently work as **Tech Lead at Sensorama Play**, leading a six-person engineering team while staying hands-on. My work has included multitenant/white-label platforms, offline synchronization, app-store delivery, data migrations, CI/CD, queues and caching, observability, load testing, deployment/recovery paths and production support.
+
+I like owning the parts that sit between code and the real product too: understanding how customers use it, deciding when and how to release, keeping rollback paths available, and translating between Engineering, Product, QA, Support and Sales.
 
 <details>
-<summary><strong>🇧🇷 Ler em português</strong></summary>
+<summary><strong>Português</strong></summary>
 <br>
 
-Sou desenvolvedor **Full Stack & Mobile** com mais de **8 anos de experiência** construindo e evoluindo produtos web, mobile, APIs e sistemas em produção. Minha especialidade mais profunda é **engenharia mobile**, principalmente React Native/Expo, com atuação avançada também em **React/Next.js, TypeScript/Node.js e PHP/Laravel**.
+Desenvolvo software em produção de ponta a ponta, atuando em **mobile, web e backend** há mais de 8 anos. Minha especialidade mais profunda é **engenharia mobile com React Native / Expo**, com atuação avançada também em **React / Next.js, TypeScript / Node.js e PHP / Laravel**.
 
-Trabalho além da feature: arquitetura, dados, offline-first, multitenancy/white-label, integrações, CI/CD, confiabilidade, performance, publicação nas lojas e sustentação fazem parte do mesmo ciclo. Também atuo com **liderança técnica hands-on**, code review, mentoria e ownership de produto.
+Atualmente sou **Tech Lead na Sensorama Play**, liderando tecnicamente uma equipe de seis profissionais sem deixar de atuar diretamente no código. Minha experiência inclui plataformas multitenant/white-label, sincronização offline, publicação em lojas, migração de dados, CI/CD, filas e cache, observabilidade, testes de carga, deploy/recovery e sustentação em produção.
 
-**Links rápidos:** [Portfólio](https://bmvbrun0.github.io/) · [Currículo PT-BR](https://bmvbrun0.github.io/assets/docs/curriculo-br-2026.pdf) · [LinkedIn](https://www.linkedin.com/in/bruno-getten-triches/)
+Também gosto da parte entre tecnologia e produto: entender como o cliente realmente usa o sistema, planejar releases, manter caminhos de rollback e fazer Engenharia, Produto, QA, Suporte e Comercial falarem a mesma língua.
 
 </details>
 
-<p align="center">
-  <img src="./assets/terminal.svg" alt="Bruno Getten Triches engineering profile terminal" width="100%">
-</p>
-
-## ⚡ Engineering lanes
+## Focus
 
 <table>
 <tr>
 <td width="50%" valign="top">
 
-### 📱 Mobile Engineering
-React Native / Expo, Android/iOS architecture, offline-first, synchronization, native integrations, releases, store publishing and production maintenance.
+**Mobile engineering**
+
+React Native / Expo, Android/iOS architecture, offline-first, synchronization, native integrations, builds, signing, store publishing and production maintenance.
 
 </td>
 <td width="50%" valign="top">
 
-### 🌐 Full Stack & Backend
+**Full stack & backend**
+
 React, Next.js, TypeScript, Node.js/NestJS, PHP/Laravel, REST, WebSockets, SQL/NoSQL, caching, queues and integrations.
 
 </td>
@@ -52,20 +54,22 @@ React, Next.js, TypeScript, Node.js/NestJS, PHP/Laravel, REST, WebSockets, SQL/N
 <tr>
 <td width="50%" valign="top">
 
-### ⚙️ Delivery & Reliability
+**Delivery & reliability**
+
 Docker, CI/CD, AWS/Azure/VPS, automated testing, observability, backups, rollback/recovery, load balancing and production support.
 
 </td>
 <td width="50%" valign="top">
 
-### 🧭 Product & Technical Leadership
-Architecture decisions, PR/code review, mentoring, product ownership and translating business needs into executable technical work.
+**Technical leadership**
+
+Architecture decisions, PR/code review, mentoring, product ownership, incident analysis and technical alignment across teams.
 
 </td>
 </tr>
 </table>
 
-## 🎨 Core stack
+## Core stack
 
 <p align="center">
   <img alt="React Native" src="https://img.shields.io/badge/React_Native-20232A?style=for-the-badge&logo=react&logoColor=61DAFB">
@@ -92,12 +96,13 @@ Architecture decisions, PR/code review, mentoring, product ownership and transla
 </p>
 
 <details>
-<summary><strong>🧠 Expanded engineering map</strong></summary>
+<summary><strong>Additional stack</strong></summary>
 <br>
 
 <p>
   <img alt="C#" src="https://img.shields.io/badge/C%23-512BD4?style=flat-square&logo=dotnet&logoColor=white">
-  <img alt=".NET" src="https://img.shields.io/badge/.NET_Framework_%2F_Core-512BD4?style=flat-square&logo=dotnet&logoColor=white">
+  <img alt=".NET Framework" src="https://img.shields.io/badge/.NET_Framework-512BD4?style=flat-square&logo=dotnet&logoColor=white">
+  <img alt=".NET Core" src="https://img.shields.io/badge/.NET_Core-512BD4?style=flat-square&logo=dotnet&logoColor=white">
   <img alt="Java" src="https://img.shields.io/badge/Java-ED8B00?style=flat-square&logo=openjdk&logoColor=white">
   <img alt="Spring Boot" src="https://img.shields.io/badge/Spring_Boot-6DB33F?style=flat-square&logo=springboot&logoColor=white">
   <img alt="Flutter" src="https://img.shields.io/badge/Flutter-02569B?style=flat-square&logo=flutter&logoColor=white">
@@ -120,7 +125,7 @@ Architecture decisions, PR/code review, mentoring, product ownership and transla
 
 </details>
 
-## 🚀 Selected public builds
+## Selected work
 
 <table>
 <tr>
@@ -134,72 +139,33 @@ Architecture decisions, PR/code review, mentoring, product ownership and transla
 </table>
 
 <p align="center">
-  <strong>More authored products, screenshots and technical context → <a href="https://bmvbrun0.github.io/library.html">Project Library</a></strong>
+  <a href="https://bmvbrun0.github.io/library.html"><strong>More authored products, screenshots and technical context</strong></a>
 </p>
 
-## 📡 Live GitHub telemetry
+## GitHub activity
 
-<sub>Generated from GitHub data by Actions and committed back into this repository. No fake counters or static sample activity.</sub>
+<sub>Public GitHub activity only. Most company and client work is kept in private repositories.</sub>
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./assets/generated/overview.dark.svg">
-  <img alt="Live GitHub overview" src="./assets/generated/overview.light.svg" width="100%">
-</picture>
+<p align="center">
+  <img src="./assets/metrics/overview.svg" alt="GitHub activity overview" width="100%">
+</p>
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./assets/generated/contributions.dark.svg">
-  <img alt="Live GitHub contribution field" src="./assets/generated/contributions.light.svg" width="100%">
-</picture>
+<p align="center">
+  <img src="./assets/metrics/isocalendar.svg" alt="Full-year contribution calendar" width="100%">
+</p>
 
-<table>
-<tr>
-<td width="50%" valign="top">
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./assets/generated/rhythm.dark.svg">
-  <img alt="GitHub activity rhythm" src="./assets/generated/rhythm.light.svg" width="100%">
-</picture>
-</td>
-<td width="50%" valign="top">
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./assets/generated/languages.dark.svg">
-  <img alt="GitHub language map" src="./assets/generated/languages.light.svg" width="100%">
-</picture>
-</td>
-</tr>
-</table>
+<p align="center">
+  <img src="./assets/metrics/languages.svg" alt="Languages across public repositories" width="100%">
+</p>
 
 <details>
-<summary><strong>📦 Repository activity</strong></summary>
-<br>
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./assets/generated/repositories.dark.svg">
-  <img alt="Repository contribution activity" src="./assets/generated/repositories.light.svg" width="100%">
-</picture>
-</details>
-
-<details>
-<summary><strong>🐍 Arcade mode — contribution snake</strong></summary>
+<summary><strong>Contribution animation</strong></summary>
 <br>
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/BMVBrun0/BMVBrun0/output/github-snake-dark.svg">
     <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/BMVBrun0/BMVBrun0/output/github-snake.svg">
-    <img alt="GitHub contribution snake generated from the contribution calendar" src="https://raw.githubusercontent.com/BMVBrun0/BMVBrun0/output/github-snake.svg" width="100%">
+    <img alt="GitHub contribution animation" src="https://raw.githubusercontent.com/BMVBrun0/BMVBrun0/output/github-snake.svg" width="100%">
   </picture>
 </p>
-<sub>The snake is generated from the contribution calendar by GitHub Actions. The telemetry cards above are the primary activity view.</sub>
 </details>
-
-<details>
-<summary><strong>🤝 How I work</strong></summary>
-<br>
-
-I like understanding the product, market and people using it before choosing the solution. I care about code quality, but also about **release timing, recovery plans, support workflows, store requirements, data integrity and the operational cost of software after launch**.
-
-I work comfortably across Engineering, QA, Product, Support, Sales, customers and partners, adapting technical communication to the audience while keeping trade-offs visible.
-
-</details>
-
-<p align="center">
-  <img src="./assets/footer-flow.svg" alt="Build, ship, observe, improve" width="100%">
-</p>
