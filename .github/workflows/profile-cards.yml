@@ -84,14 +84,47 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add assets/dashboard/activity-dark.svg assets/dashboard/activity-light.svg
 
-          if git diff --cached --quiet; then
-            echo "Dashboard is already current."
-            exit 0
-          fi
+          # Preserve the freshly generated files outside the working tree.
+          # Another workflow or a user commit may update main while this job runs.
+          tmp_dir="$(mktemp -d)"
+          cp assets/dashboard/activity-dark.svg "$tmp_dir/activity-dark.svg"
+          cp assets/dashboard/activity-light.svg "$tmp_dir/activity-light.svg"
 
-          git commit -m "chore(profile): refresh activity dashboard [skip ci]"
-          git push
+          branch="${GITHUB_REF_NAME:-main}"
+
+          # Retry from the latest remote head so a concurrent commit cannot make
+          # this job fail with a non-fast-forward push.
+          for attempt in 1 2 3; do
+            echo "Publish attempt $attempt on branch $branch"
+
+            git fetch origin "$branch"
+            git reset --hard "origin/$branch"
+
+            mkdir -p assets/dashboard
+            cp "$tmp_dir/activity-dark.svg" assets/dashboard/activity-dark.svg
+            cp "$tmp_dir/activity-light.svg" assets/dashboard/activity-light.svg
+
+            git add assets/dashboard/activity-dark.svg assets/dashboard/activity-light.svg
+
+            if git diff --cached --quiet; then
+              echo "Dashboard is already current on the latest remote commit."
+              exit 0
+            fi
+
+            git commit -m "chore(profile): refresh activity dashboard [skip ci]"
+
+            if git push origin "HEAD:$branch"; then
+              echo "Dashboard published successfully."
+              exit 0
+            fi
+
+            echo "Remote changed during publish; retrying from latest $branch..."
+            sleep $((attempt * 2))
+          done
+
+          echo "ERROR: could not publish dashboard after 3 attempts because the remote kept changing."
+          exit 1
