@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="846" height="92" viewBox="0 0 846 92">
+<defs><linearGradient id="g" x1="0" x2="1"><stop stop-color="#22d3ee"/><stop offset=".35" stop-color="#7c3aed"/><stop offset=".7" stop-color="#ec4899"/><stop offset="1" stop-color="#f59e0b"/></linearGradient></defs>
+<rect width="846" height="92" rx="18" fill="#0d1117"/><path d="M0 63 C120 20 190 86 320 45 S530 14 650 53 S770 75 846 36" fill="none" stroke="url(#g)" stroke-width="3" opacity=".8"><animate attributeName="stroke-dasharray" values="0 1200;120 14;0 1200" dur="8s" repeatCount="indefinite"/></path>
+<text x="423" y="39" text-anchor="middle" fill="#f0f6fc" font-family="Inter,Arial,sans-serif" font-weight="700" font-size="17">Build · Ship · Observe · Improve</text>
+<text x="423" y="64" text-anchor="middle" fill="#8b949e" font-family="Inter,Arial,sans-serif" font-size="13">mobile · web · backend · product · reliability</text>
+</svg>

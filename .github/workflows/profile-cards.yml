@@ -1,0 +1,38 @@
+name: Refresh live profile telemetry
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 3 * * *"
+  push:
+    branches: [main, master]
+    paths:
+      - "README.md"
+      - ".github/workflows/profile-cards.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-profile-telemetry
+  cancel-in-progress: false
+
+jobs:
+  cards:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout profile repository
+        uses: actions/checkout@v4
+
+      - name: Render real GitHub profile cards
+        uses: seijikohara/profile-cards-action@v1
+        with:
+          github-token: ${{ secrets.PROFILE_METRICS_TOKEN || secrets.GITHUB_TOKEN }}
+          username: ${{ github.repository_owner }}
+          cards: overview,contributions,rhythm,repositories,languages
+          output-dir: assets/generated
+          themes: light,dark
+          language-limit: 10
+          commit: true
+          commit-message: "chore(profile): refresh live GitHub telemetry [skip ci]"

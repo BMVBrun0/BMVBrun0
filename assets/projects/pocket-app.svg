@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="410" height="190" viewBox="0 0 410 190">
+    <defs>
+      <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#0d1117"/><stop offset="1" stop-color="#161b22"/></linearGradient>
+      <linearGradient id="accent" x1="0" x2="1"><stop stop-color="#34d399"/><stop offset="1" stop-color="#22d3ee"/></linearGradient>
+      <filter id="glow"><feGaussianBlur stdDeviation="5" result="x"/><feMerge><feMergeNode in="x"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    </defs>
+    <rect x="1" y="1" width="408" height="188" rx="18" fill="url(#bg)" stroke="#30363d"/>
+    <rect x="18" y="18" width="52" height="5" rx="2.5" fill="url(#accent)" filter="url(#glow)"/>
+    <circle cx="374" cy="30" r="17" fill="#34d399" opacity=".12"/><circle cx="374" cy="30" r="7" fill="#22d3ee"><animate attributeName="r" values="6;9;6" dur="3.2s" repeatCount="indefinite"/></circle>
+    <text x="20" y="63" fill="#f0f6fc" font-family="Inter,Arial,sans-serif" font-size="22" font-weight="700">Pocket Links App</text>
+    <text x="20" y="93" fill="#c9d1d9" font-family="Inter,Arial,sans-serif" font-size="14">Cross-platform offline-first client</text>
+    <text x="20" y="119" fill="#8b949e" font-family="Inter,Arial,sans-serif" font-size="13">sync queue · QR codes · metrics · Android/iOS/Web</text>
+    <rect x="20" y="143" width="370" height="1" fill="#21262d"/>
+    <text x="20" y="169" fill="#34d399" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="12">open project →</text>
+    </svg>
