@@ -36,7 +36,7 @@ jobs:
 
       - name: Generate activity dashboard
         env:
-          GH_TOKEN: ${{ secrets.METRICS_TOKEN || github.token }}
+          GH_TOKEN: ${{ secrets.PROFILE_METRICS_TOKEN || secrets.METRICS_TOKEN || github.token }}
           PROFILE_USERNAME: ${{ github.repository_owner }}
         run: node scripts/profile-dashboard.mjs
 
@@ -60,10 +60,10 @@ jobs:
 
             # Stable markers emitted by scripts/profile-dashboard.mjs.
             for marker in \
-              'PUBLIC GITHUB ACTIVITY' \
-              'Open-source dashboard' \
+              'GITHUB ACTIVITY' \
+              'Engineering dashboard' \
               '12-month contribution pulse' \
-              'Public code mix' \
+              'Repository code mix' \
               'Contribution field' \
               'Weekly rhythm'; do
               if ! grep -q "$marker" "$file"; then

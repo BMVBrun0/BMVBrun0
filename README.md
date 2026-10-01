@@ -72,56 +72,20 @@ Architecture decisions, PR/code review, mentoring, product ownership, incident a
 ## Core stack
 
 <p align="center">
-  <img alt="React Native" src="https://img.shields.io/badge/React_Native-20232A?style=for-the-badge&logo=react&logoColor=61DAFB">
-  <img alt="Expo" src="https://img.shields.io/badge/Expo-000020?style=for-the-badge&logo=expo&logoColor=white">
-  <img alt="React" src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB">
-  <img alt="Next.js" src="https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white">
-  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white">
-  <img alt="Node.js" src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white">
-  <img alt="NestJS" src="https://img.shields.io/badge/NestJS-E0234E?style=for-the-badge&logo=nestjs&logoColor=white">
-  <img alt="PHP" src="https://img.shields.io/badge/PHP-777BB4?style=for-the-badge&logo=php&logoColor=white">
-  <img alt="Laravel" src="https://img.shields.io/badge/Laravel-FF2D20?style=for-the-badge&logo=laravel&logoColor=white">
+  <img src="https://skillicons.dev/icons?i=react,nextjs,ts,nodejs,nestjs,php,laravel,postgres,mongodb,redis,docker,aws,azure,githubactions&perline=14&theme=dark" alt="Core stack" />
 </p>
 
-<p align="center">
-  <img alt="PostgreSQL" src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white">
-  <img alt="MongoDB" src="https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white">
-  <img alt="Redis" src="https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white">
-  <img alt="Docker" src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white">
-  <img alt="AWS" src="https://img.shields.io/badge/AWS-232F3E?style=for-the-badge&logo=amazonwebservices&logoColor=FF9900">
-  <img alt="Azure" src="https://img.shields.io/badge/Azure-0078D4?style=for-the-badge&logo=microsoftazure&logoColor=white">
-  <img alt="GitHub Actions" src="https://img.shields.io/badge/GitHub_Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white">
-  <img alt="Playwright" src="https://img.shields.io/badge/Playwright-2EAD33?style=for-the-badge&logo=playwright&logoColor=white">
-  <img alt="Jest" src="https://img.shields.io/badge/Jest-C21325?style=for-the-badge&logo=jest&logoColor=white">
-</p>
+<p align="center"><sub>React Native / Expo · React · Next.js · TypeScript · Node.js / NestJS · PHP / Laravel · PostgreSQL · MongoDB · Redis · Docker · AWS · Azure · GitHub Actions</sub></p>
 
 <details>
 <summary><strong>Additional stack</strong></summary>
 <br>
 
-<p>
-  <img alt="C#" src="https://img.shields.io/badge/C%23-512BD4?style=flat-square&logo=dotnet&logoColor=white">
-  <img alt=".NET Framework" src="https://img.shields.io/badge/.NET_Framework-512BD4?style=flat-square&logo=dotnet&logoColor=white">
-  <img alt=".NET Core" src="https://img.shields.io/badge/.NET_Core-512BD4?style=flat-square&logo=dotnet&logoColor=white">
-  <img alt="Java" src="https://img.shields.io/badge/Java-ED8B00?style=flat-square&logo=openjdk&logoColor=white">
-  <img alt="Spring Boot" src="https://img.shields.io/badge/Spring_Boot-6DB33F?style=flat-square&logo=springboot&logoColor=white">
-  <img alt="Flutter" src="https://img.shields.io/badge/Flutter-02569B?style=flat-square&logo=flutter&logoColor=white">
-  <img alt="Dart" src="https://img.shields.io/badge/Dart-0175C2?style=flat-square&logo=dart&logoColor=white">
-  <img alt="Vue.js" src="https://img.shields.io/badge/Vue.js-4FC08D?style=flat-square&logo=vuedotjs&logoColor=white">
-  <img alt="Angular" src="https://img.shields.io/badge/Angular-DD0031?style=flat-square&logo=angular&logoColor=white">
-  <img alt="Python" src="https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white">
-  <img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white">
-  <img alt="Swift" src="https://img.shields.io/badge/Swift-F05138?style=flat-square&logo=swift&logoColor=white">
-  <img alt="Kubernetes" src="https://img.shields.io/badge/Kubernetes-326CE5?style=flat-square&logo=kubernetes&logoColor=white">
-  <img alt="Unity" src="https://img.shields.io/badge/Unity-000000?style=flat-square&logo=unity&logoColor=white">
-  <img alt="Firebase" src="https://img.shields.io/badge/Firebase-FFCA28?style=flat-square&logo=firebase&logoColor=black">
-  <img alt="RabbitMQ" src="https://img.shields.io/badge/RabbitMQ-FF6600?style=flat-square&logo=rabbitmq&logoColor=white">
-  <img alt="Kafka" src="https://img.shields.io/badge/Kafka-231F20?style=flat-square&logo=apachekafka&logoColor=white">
+<p align="center">
+  <img src="https://skillicons.dev/icons?i=cs,dotnet,java,spring,flutter,dart,vue,angular,py,fastapi,swift,kubernetes,firebase,rabbitmq,kafka,jenkins,jest&perline=17&theme=dark" alt="Additional stack" />
 </p>
 
-**Data:** PostgreSQL · SQL Server · MySQL / MariaDB · Oracle · MongoDB · Redis · Firebase · SQLite · modeling · query tuning · stored procedures · triggers · aggregations.
-
-**Engineering:** GitHub Actions · Jenkins · GitLab CI · Playwright · Jest · RabbitMQ · Kafka · SQS/SNS · Kubernetes · LLM/OpenAI integrations.
+<p align="center"><sub>C# / .NET · Java / Spring Boot · Flutter / Dart · Vue.js · Angular · Python / FastAPI · Swift · Kubernetes · Firebase · RabbitMQ · Kafka · Jenkins · Jest · Playwright · SQL Server · MySQL / MariaDB · Oracle · SQLite · LLM / OpenAI integrations</sub></p>
 
 </details>
 
@@ -142,20 +106,11 @@ Architecture decisions, PR/code review, mentoring, product ownership, incident a
   <a href="https://bmvbrun0.github.io/library.html"><strong>More authored products, screenshots and technical context</strong></a>
 </p>
 
-## Open-source activity
-
-<sub>Public GitHub activity only. Company and client repositories are mostly private.</sub>
+## GitHub activity
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="./assets/dashboard/activity-dark.svg">
   <source media="(prefers-color-scheme: light)" srcset="./assets/dashboard/activity-light.svg">
-  <img alt="Public GitHub activity dashboard" src="./assets/dashboard/activity-dark.svg" width="100%">
+  <img alt="GitHub activity dashboard" src="./assets/dashboard/activity-dark.svg" width="100%">
 </picture>
 
-### Contribution landscape
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./profile-3d-contrib/profile-night-rainbow.svg">
-  <source media="(prefers-color-scheme: light)" srcset="./profile-3d-contrib/profile-season-animate.svg">
-  <img alt="Animated 3D contribution landscape" src="./profile-3d-contrib/profile-night-rainbow.svg" width="100%">
-</picture>

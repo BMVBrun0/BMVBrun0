@@ -32,11 +32,13 @@ query ProfileDashboard($login: String!, $from: DateTime!, $to: DateTime!) {
       totalCount
       nodes {
         name
+        nameWithOwner
+        isPrivate
         pushedAt
         stargazerCount
         forkCount
         primaryLanguage { name color }
-        languages(first: 12, orderBy: { field: SIZE, direction: DESC }) {
+        languages(first: 16, orderBy: { field: SIZE, direction: DESC }) {
           edges { size node { name color } }
         }
       }
@@ -55,6 +57,26 @@ query ProfileDashboard($login: String!, $from: DateTime!, $to: DateTime!) {
             contributionCount
             weekday
           }
+        }
+      }
+    }
+  }
+  viewer {
+    login
+    repositories(
+      first: 100,
+      affiliations: [OWNER, COLLABORATOR, ORGANIZATION_MEMBER],
+      isFork: false,
+      orderBy: { field: PUSHED_AT, direction: DESC }
+    ) {
+      totalCount
+      nodes {
+        name
+        nameWithOwner
+        isPrivate
+        pushedAt
+        languages(first: 16, orderBy: { field: SIZE, direction: DESC }) {
+          edges { size node { name color } }
         }
       }
     }
@@ -101,7 +123,27 @@ const contributionTotal = calendar.totalContributions || 0;
 const prs = user.contributionsCollection.totalPullRequestContributions || 0;
 const reviews = user.contributionsCollection.totalPullRequestReviewContributions || 0;
 const commits = user.contributionsCollection.totalCommitContributions || 0;
-const publicRepos = user.repositories?.totalCount || 0;
+
+// Always keep the public repositories from the profile itself, then merge any
+// additional repositories visible to the authenticated token. This lets a
+// read-only PAT enrich aggregate counts/language mix with private work without
+// ever rendering repository names.
+const repoMap = new Map();
+for (const repo of user.repositories?.nodes || []) {
+  if (!repo?.nameWithOwner || repo.nameWithOwner === `${USERNAME}/${USERNAME}`) continue;
+  repoMap.set(repo.nameWithOwner, repo);
+}
+for (const repo of payload.data?.viewer?.repositories?.nodes || []) {
+  if (!repo?.nameWithOwner || repo.nameWithOwner === `${USERNAME}/${USERNAME}`) continue;
+  repoMap.set(repo.nameWithOwner, { ...repoMap.get(repo.nameWithOwner), ...repo });
+}
+const analyzedRepos = [...repoMap.values()];
+const privateRepoCount = analyzedRepos.filter((repo) => repo.isPrivate).length;
+const publicRepoCount = analyzedRepos.filter((repo) => !repo.isPrivate).length;
+const repoCount = analyzedRepos.length;
+const repoScope = privateRepoCount > 0
+  ? `${publicRepoCount} public + ${privateRepoCount} private`
+  : `${publicRepoCount} public repos`;
 
 const monthMap = new Map();
 for (const day of days) {
@@ -126,7 +168,7 @@ const weekdays = weekdayLabels.map((label, weekday) => ({
 }));
 
 const langMap = new Map();
-for (const repo of user.repositories?.nodes || []) {
+for (const repo of analyzedRepos) {
   for (const edge of repo.languages?.edges || []) {
     const name = edge.node?.name;
     if (!name) continue;
@@ -140,9 +182,9 @@ const languageTotal = [...langMap.values()].reduce((sum, item) => sum + item.siz
 let languages = [...langMap.values()]
   .sort((a, b) => b.size - a.size)
   .map((item) => ({ ...item, pct: languageTotal ? (item.size / languageTotal) * 100 : 0 }));
-if (languages.length > 5) {
-  const top = languages.slice(0, 4);
-  const otherSize = languages.slice(4).reduce((sum, item) => sum + item.size, 0);
+if (languages.length > 6) {
+  const top = languages.slice(0, 5);
+  const otherSize = languages.slice(5).reduce((sum, item) => sum + item.size, 0);
   top.push({ name: 'Other', size: otherSize, pct: languageTotal ? (otherSize / languageTotal) * 100 : 0, color: '#64748b' });
   languages = top;
 }
@@ -191,12 +233,12 @@ function render(theme) {
   const h = 650;
   const pad = 28;
 
-  const recentRepos = (user.repositories?.nodes || []).filter((repo) => repo.pushedAt && (now - new Date(repo.pushedAt)) <= 90 * 86400000).length;
+  const recentRepos = analyzedRepos.filter((repo) => repo.pushedAt && (now - new Date(repo.pushedAt)) <= 90 * 86400000).length;
   const metrics = [
     { label: 'CONTRIBUTIONS', value: compact(contributionTotal), hint: 'last 12 months', accent: cyan },
     { label: 'COMMITS', value: compact(commits), hint: 'public contribution signal', accent: blue },
     { label: 'ACTIVE DAYS', value: compact(activeDays), hint: `${Math.round((activeDays / Math.max(1, days.length)) * 100)}% of days`, accent: violet },
-    { label: 'PUBLIC REPOS', value: compact(publicRepos), hint: `${recentRepos} updated in 90d`, accent: green },
+    { label: 'REPOS INDEXED', value: compact(repoCount), hint: `${recentRepos} updated in 90d`, accent: green },
   ];
 
   const chartX = 48;
@@ -279,8 +321,8 @@ function render(theme) {
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-labelledby="title desc">
-  <title id="title">${esc(USERNAME)} public GitHub activity dashboard</title>
-  <desc id="desc">A twelve month view of public GitHub contributions, activity cadence, and language composition.</desc>
+  <title id="title">${esc(USERNAME)} GitHub activity dashboard</title>
+  <desc id="desc">A twelve month view of GitHub contribution activity and aggregate repository language composition.</desc>
   <defs>
     <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="${cyan}"/><stop offset="0.5" stop-color="${violet}"/><stop offset="1" stop-color="${pink}"/></linearGradient>
     <linearGradient id="area" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${violet}" stop-opacity="0.35"/><stop offset="1" stop-color="${violet}" stop-opacity="0.02"/></linearGradient>
@@ -299,6 +341,8 @@ function render(theme) {
       .tiny { font-size: 9px; fill: ${muted}; }
       .legend { font-size: 11px; fill: ${text}; }
       .legendPct { font-size: 10px; fill: ${muted}; text-anchor: end; }
+      .donutLabel { font-weight: 760; }
+      .donutPct { font-size: 12px; font-weight: 700; fill: ${muted}; }
       .hot { opacity: .96; }
     ]]></style>
   </defs>
@@ -308,8 +352,8 @@ function render(theme) {
   <circle cx="96" cy="640" r="120" fill="${cyan}" opacity="${dark ? '.05' : '.035'}" filter="url(#glow)"/>
 
   <rect x="28" y="27" width="95" height="3" rx="2" fill="url(#accent)"/>
-  <text x="28" y="52" class="kicker">BMVBRUN0 / PUBLIC GITHUB ACTIVITY</text>
-  <text x="28" y="75" class="title">Open-source dashboard</text>
+  <text x="28" y="52" class="kicker">BMVBRUN0 / GITHUB ACTIVITY</text>
+  <text x="28" y="75" class="title">Engineering dashboard</text>
   <text x="1092" y="51" text-anchor="end" class="muted">updated ${updated}</text>
   <text x="1092" y="69" text-anchor="end" class="muted">trailing 12 months</text>
 
@@ -325,20 +369,20 @@ function render(theme) {
   ${monthLabels}
 
   <rect x="738" y="192" width="354" height="300" rx="18" fill="${surface2}" stroke="${border}"/>
-  <text x="758" y="220" class="section">Public code mix</text>
-  <text x="1072" y="220" text-anchor="end" class="muted">owned, non-fork repos</text>
+  <text x="758" y="220" class="section">Repository code mix</text>
+  <text x="1072" y="220" text-anchor="end" class="muted">${esc(repoScope)}</text>
   <circle cx="${donutCx}" cy="${donutCy}" r="${donutR}" fill="none" stroke="${faint}" stroke-width="22"/>
   ${langSvg}
   <circle cx="${donutCx}" cy="${donutCy}" r="51" fill="${surface2}"/>
-  <text x="${donutCx}" y="${donutCy - 3}" text-anchor="middle" class="metricValue">${languages[0] ? esc(languages[0].name) : '—'}</text>
-  <text x="${donutCx}" y="${donutCy + 19}" text-anchor="middle" class="muted">top public language</text>
+  <text x="${donutCx}" y="${donutCy - 5}" text-anchor="middle" class="donutLabel" font-size="${languages[0] ? Math.max(12, Math.min(18, 24 - languages[0].name.length * 0.7)).toFixed(1) : '18'}">${languages[0] ? esc(languages[0].name) : '—'}</text>
+  <text x="${donutCx}" y="${donutCy + 17}" text-anchor="middle" class="donutPct">${languages[0] ? `${languages[0].pct.toFixed(1)}%` : ''}</text>
   ${legendSvg}
 
   <rect x="28" y="398" width="690" height="224" rx="18" fill="${surface2}" stroke="${border}"/>
   <text x="48" y="427" class="section">Contribution field</text>
   <text x="694" y="427" text-anchor="end" class="muted">${activeDays} active days · ${compact(contributionTotal)} contributions</text>
   ${heatCells}
-  <text x="48" y="607" class="muted">public repositories and public contributions only</text>
+  <text x="48" y="607" class="muted">profile contribution graph · aggregate repository data</text>
 
   <rect x="738" y="508" width="354" height="114" rx="18" fill="${surface2}" stroke="${border}"/>
   <text x="758" y="533" class="section">Weekly rhythm</text>
@@ -351,4 +395,4 @@ await fs.mkdir(outDir, { recursive: true });
 await fs.writeFile(path.join(outDir, 'activity-dark.svg'), render('dark'));
 await fs.writeFile(path.join(outDir, 'activity-light.svg'), render('light'));
 
-console.log(`Generated dashboard for ${USERNAME}: ${contributionTotal} contributions, ${activeDays} active days, ${publicRepos} public repos.`);
+console.log(`Generated dashboard for ${USERNAME}: ${contributionTotal} contributions, ${activeDays} active days, ${repoCount} repositories indexed (${privateRepoCount} private).`);
