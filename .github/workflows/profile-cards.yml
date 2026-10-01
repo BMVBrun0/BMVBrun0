@@ -63,7 +63,6 @@ jobs:
               'GITHUB ACTIVITY' \
               'Engineering dashboard' \
               '12-month contribution pulse' \
-              'Repository code mix' \
               'Contribution field' \
               'Weekly rhythm'; do
               if ! grep -q "$marker" "$file"; then

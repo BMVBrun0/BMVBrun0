@@ -19,9 +19,6 @@ const from = fromDate.toISOString();
 const query = `
 query ProfileDashboard($login: String!, $from: DateTime!, $to: DateTime!) {
   user(login: $login) {
-    name
-    login
-    followers { totalCount }
     repositories(
       first: 100,
       privacy: PUBLIC,
@@ -35,20 +32,10 @@ query ProfileDashboard($login: String!, $from: DateTime!, $to: DateTime!) {
         nameWithOwner
         isPrivate
         pushedAt
-        stargazerCount
-        forkCount
-        primaryLanguage { name color }
-        languages(first: 16, orderBy: { field: SIZE, direction: DESC }) {
-          edges { size node { name color } }
-        }
       }
     }
     contributionsCollection(from: $from, to: $to) {
       totalCommitContributions
-      totalIssueContributions
-      totalPullRequestContributions
-      totalPullRequestReviewContributions
-      restrictedContributionsCount
       contributionCalendar {
         totalContributions
         weeks {
@@ -62,7 +49,6 @@ query ProfileDashboard($login: String!, $from: DateTime!, $to: DateTime!) {
     }
   }
   viewer {
-    login
     repositories(
       first: 100,
       affiliations: [OWNER, COLLABORATOR, ORGANIZATION_MEMBER],
@@ -75,9 +61,6 @@ query ProfileDashboard($login: String!, $from: DateTime!, $to: DateTime!) {
         nameWithOwner
         isPrivate
         pushedAt
-        languages(first: 16, orderBy: { field: SIZE, direction: DESC }) {
-          edges { size node { name color } }
-        }
       }
     }
   }
@@ -120,14 +103,11 @@ const days = calendar.weeks.flatMap((week) => week.contributionDays || []);
 const activeDays = days.filter((day) => day.contributionCount > 0).length;
 const busiest = days.reduce((best, day) => day.contributionCount > best.contributionCount ? day : best, { contributionCount: 0, date: '' });
 const contributionTotal = calendar.totalContributions || 0;
-const prs = user.contributionsCollection.totalPullRequestContributions || 0;
-const reviews = user.contributionsCollection.totalPullRequestReviewContributions || 0;
 const commits = user.contributionsCollection.totalCommitContributions || 0;
 
 // Always keep the public repositories from the profile itself, then merge any
-// additional repositories visible to the authenticated token. This lets a
-// read-only PAT enrich aggregate counts/language mix with private work without
-// ever rendering repository names.
+// additional repositories visible to the authenticated token. This keeps the
+// aggregate repository count current without ever rendering repository names.
 const repoMap = new Map();
 for (const repo of user.repositories?.nodes || []) {
   if (!repo?.nameWithOwner || repo.nameWithOwner === `${USERNAME}/${USERNAME}`) continue;
@@ -139,12 +119,7 @@ for (const repo of payload.data?.viewer?.repositories?.nodes || []) {
 }
 const analyzedRepos = [...repoMap.values()];
 const privateRepoCount = analyzedRepos.filter((repo) => repo.isPrivate).length;
-const publicRepoCount = analyzedRepos.filter((repo) => !repo.isPrivate).length;
 const repoCount = analyzedRepos.length;
-const repoScope = privateRepoCount > 0
-  ? `${publicRepoCount} public + ${privateRepoCount} private`
-  : `${publicRepoCount} public repos`;
-
 const monthMap = new Map();
 for (const day of days) {
   const key = day.date.slice(0, 7);
@@ -166,28 +141,6 @@ const weekdays = weekdayLabels.map((label, weekday) => ({
   label,
   value: days.filter((day) => day.weekday === weekday).reduce((sum, day) => sum + day.contributionCount, 0),
 }));
-
-const langMap = new Map();
-for (const repo of analyzedRepos) {
-  for (const edge of repo.languages?.edges || []) {
-    const name = edge.node?.name;
-    if (!name) continue;
-    const prev = langMap.get(name) || { name, size: 0, color: edge.node.color || '#8b949e' };
-    prev.size += edge.size || 0;
-    if (edge.node.color) prev.color = edge.node.color;
-    langMap.set(name, prev);
-  }
-}
-const languageTotal = [...langMap.values()].reduce((sum, item) => sum + item.size, 0);
-let languages = [...langMap.values()]
-  .sort((a, b) => b.size - a.size)
-  .map((item) => ({ ...item, pct: languageTotal ? (item.size / languageTotal) * 100 : 0 }));
-if (languages.length > 6) {
-  const top = languages.slice(0, 5);
-  const otherSize = languages.slice(5).reduce((sum, item) => sum + item.size, 0);
-  top.push({ name: 'Other', size: otherSize, pct: languageTotal ? (otherSize / languageTotal) * 100 : 0, color: '#64748b' });
-  languages = top;
-}
 
 function esc(value) {
   return String(value ?? '')
@@ -231,8 +184,6 @@ function render(theme) {
 
   const w = 1120;
   const h = 650;
-  const pad = 28;
-
   const recentRepos = analyzedRepos.filter((repo) => repo.pushedAt && (now - new Date(repo.pushedAt)) <= 90 * 86400000).length;
   const metrics = [
     { label: 'CONTRIBUTIONS', value: compact(contributionTotal), hint: 'last 12 months', accent: cyan },
@@ -243,7 +194,7 @@ function render(theme) {
 
   const chartX = 48;
   const chartY = 238;
-  const chartW = 640;
+  const chartW = 1024;
   const chartH = 105;
   const monthPoints = pointsForMonths(months, chartX, chartY, chartW, chartH);
   const poly = monthPoints.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
@@ -270,29 +221,6 @@ function render(theme) {
   const gap = 3;
   const weekW = cell + gap;
 
-  const donutCx = 870;
-  const donutCy = 306;
-  const donutR = 76;
-  const donutCirc = 2 * Math.PI * donutR;
-  let donutOffset = 0;
-
-  let langSvg = '';
-  let legendSvg = '';
-  if (languages.length && languageTotal > 0) {
-    languages.forEach((lang, i) => {
-      const len = (lang.pct / 100) * donutCirc;
-      langSvg += `<circle cx="${donutCx}" cy="${donutCy}" r="${donutR}" fill="none" stroke="${esc(lang.color)}" stroke-width="22" stroke-linecap="butt" stroke-dasharray="${len.toFixed(2)} ${(donutCirc - len).toFixed(2)}" stroke-dashoffset="${(-donutOffset).toFixed(2)}" transform="rotate(-90 ${donutCx} ${donutCy})" opacity="0.96"/>`;
-      donutOffset += len;
-      const col = i < 3 ? 0 : 1;
-      const row = i < 3 ? i : i - 3;
-      const lx = col === 0 ? 758 : 918;
-      const ly = 412 + row * 28;
-      legendSvg += `<circle cx="${lx}" cy="${ly - 4}" r="5" fill="${esc(lang.color)}"/><text x="${lx + 14}" y="${ly}" class="legend">${esc(lang.name)}</text><text x="${lx + 142}" y="${ly}" class="legendPct">${lang.pct.toFixed(1)}%</text>`;
-    });
-  } else {
-    legendSvg = `<text x="790" y="420" class="muted">No public language data available</text>`;
-  }
-
   const monthLabels = monthPoints.map((p, i) => i % 2 === 0
     ? `<text x="${p.x}" y="${chartY + chartH + 26}" text-anchor="middle" class="axis">${esc(p.label)}</text>`
     : '').join('');
@@ -306,9 +234,8 @@ function render(theme) {
   }).join('')).join('');
 
   const weekdayBars = weekdays.map((d, i) => {
-    const width = 120 * (d.value / maxWeekday);
-    const y = 540 + i * 11;
-    return `<text x="758" y="${y + 7}" class="tiny">${d.label}</text><rect x="794" y="${y}" width="250" height="7" rx="3.5" fill="${faint}"/><rect x="794" y="${y}" width="${Math.max(2, 250 * (d.value / maxWeekday)).toFixed(1)}" height="7" rx="3.5" fill="url(#barGrad)"/>`;
+    const y = 452 + i * 22;
+    return `<text x="758" y="${y + 8}" class="tiny">${d.label}</text><rect x="794" y="${y}" width="250" height="8" rx="4" fill="${faint}"/><rect x="794" y="${y}" width="${Math.max(2, 250 * (d.value / maxWeekday)).toFixed(1)}" height="8" rx="4" fill="url(#barGrad)"/>`;
   }).join('');
 
   const metricSvg = metrics.map((m, i) => {
@@ -322,7 +249,7 @@ function render(theme) {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-labelledby="title desc">
   <title id="title">${esc(USERNAME)} GitHub activity dashboard</title>
-  <desc id="desc">A twelve month view of GitHub contribution activity and aggregate repository language composition.</desc>
+  <desc id="desc">A twelve month view of GitHub contribution activity and cadence.</desc>
   <defs>
     <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="${cyan}"/><stop offset="0.5" stop-color="${violet}"/><stop offset="1" stop-color="${pink}"/></linearGradient>
     <linearGradient id="area" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${violet}" stop-opacity="0.35"/><stop offset="1" stop-color="${violet}" stop-opacity="0.02"/></linearGradient>
@@ -339,10 +266,6 @@ function render(theme) {
       .section { font-size: 12px; font-weight: 720; letter-spacing: .5px; }
       .axis { font-size: 9px; fill: ${muted}; }
       .tiny { font-size: 9px; fill: ${muted}; }
-      .legend { font-size: 11px; fill: ${text}; }
-      .legendPct { font-size: 10px; fill: ${muted}; text-anchor: end; }
-      .donutLabel { font-weight: 760; }
-      .donutPct { font-size: 12px; font-weight: 700; fill: ${muted}; }
       .hot { opacity: .96; }
     ]]></style>
   </defs>
@@ -359,33 +282,24 @@ function render(theme) {
 
   ${metricSvg}
 
-  <rect x="28" y="192" width="690" height="190" rx="18" fill="${surface2}" stroke="${border}"/>
+  <rect x="28" y="192" width="1064" height="190" rx="18" fill="${surface2}" stroke="${border}"/>
   <text x="48" y="220" class="section">12-month contribution pulse</text>
-  <text x="694" y="220" text-anchor="end" class="muted">busiest day · ${esc(busiestText)}</text>
+  <text x="1072" y="220" text-anchor="end" class="muted">busiest day · ${esc(busiestText)}</text>
   <line x1="${chartX}" y1="${chartY + chartH}" x2="${chartX + chartW}" y2="${chartY + chartH}" stroke="${border}"/>
   <polygon points="${area}" fill="url(#area)"/>
   <polyline points="${poly}" fill="none" stroke="url(#accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" class="pulseLine"/>
   ${monthPoints.map((p) => `<circle cx="${p.x}" cy="${p.y}" r="3.5" fill="${bg}" stroke="${cyan}" stroke-width="2"/>`).join('')}
   ${monthLabels}
 
-  <rect x="738" y="192" width="354" height="300" rx="18" fill="${surface2}" stroke="${border}"/>
-  <text x="758" y="220" class="section">Repository code mix</text>
-  <text x="1072" y="220" text-anchor="end" class="muted">${esc(repoScope)}</text>
-  <circle cx="${donutCx}" cy="${donutCy}" r="${donutR}" fill="none" stroke="${faint}" stroke-width="22"/>
-  ${langSvg}
-  <circle cx="${donutCx}" cy="${donutCy}" r="51" fill="${surface2}"/>
-  <text x="${donutCx}" y="${donutCy - 5}" text-anchor="middle" class="donutLabel" font-size="${languages[0] ? Math.max(12, Math.min(18, 24 - languages[0].name.length * 0.7)).toFixed(1) : '18'}">${languages[0] ? esc(languages[0].name) : '—'}</text>
-  <text x="${donutCx}" y="${donutCy + 17}" text-anchor="middle" class="donutPct">${languages[0] ? `${languages[0].pct.toFixed(1)}%` : ''}</text>
-  ${legendSvg}
 
   <rect x="28" y="398" width="690" height="224" rx="18" fill="${surface2}" stroke="${border}"/>
   <text x="48" y="427" class="section">Contribution field</text>
   <text x="694" y="427" text-anchor="end" class="muted">${activeDays} active days · ${compact(contributionTotal)} contributions</text>
   ${heatCells}
-  <text x="48" y="607" class="muted">profile contribution graph · aggregate repository data</text>
+  <text x="48" y="607" class="muted">profile contribution graph · GitHub activity</text>
 
-  <rect x="738" y="508" width="354" height="114" rx="18" fill="${surface2}" stroke="${border}"/>
-  <text x="758" y="533" class="section">Weekly rhythm</text>
+  <rect x="738" y="398" width="354" height="224" rx="18" fill="${surface2}" stroke="${border}"/>
+  <text x="758" y="427" class="section">Weekly rhythm</text>
   ${weekdayBars}
 </svg>`;
 }
