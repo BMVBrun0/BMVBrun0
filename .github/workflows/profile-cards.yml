@@ -30,7 +30,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 22
 
@@ -44,15 +44,40 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+
           for file in assets/dashboard/activity-dark.svg assets/dashboard/activity-light.svg; do
-            test -s "$file"
-            grep -q '<svg' "$file"
-            grep -q 'PUBLIC DEVELOPMENT SIGNAL' "$file"
-            grep -q 'Contribution field' "$file"
-            if grep -qiE 'placeholder|mock data|something went wrong|error while' "$file"; then
-              echo "Invalid generated output: $file"
+            echo "Validating $file"
+
+            if [[ ! -s "$file" ]]; then
+              echo "ERROR: dashboard file is missing or empty: $file"
               exit 1
             fi
+
+            if ! grep -q '<svg' "$file"; then
+              echo "ERROR: generated file is not an SVG: $file"
+              exit 1
+            fi
+
+            # Stable markers emitted by scripts/profile-dashboard.mjs.
+            for marker in \
+              'PUBLIC GITHUB ACTIVITY' \
+              'Open-source dashboard' \
+              '12-month contribution pulse' \
+              'Public code mix' \
+              'Contribution field' \
+              'Weekly rhythm'; do
+              if ! grep -q "$marker" "$file"; then
+                echo "ERROR: expected dashboard marker '$marker' was not found in $file"
+                exit 1
+              fi
+            done
+
+            if grep -qiE 'placeholder|mock data|something went wrong|error while' "$file"; then
+              echo "ERROR: invalid placeholder/error text found in generated output: $file"
+              exit 1
+            fi
+
+            echo "OK: $file"
           done
 
       - name: Publish dashboard
