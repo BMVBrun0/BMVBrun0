@@ -9,6 +9,7 @@ on:
     paths:
       - "README.md"
       - "scripts/profile-dashboard.mjs"
+      - "tests/**"
       - ".github/workflows/profile-cards.yml"
 
 permissions:
@@ -34,11 +35,33 @@ jobs:
         with:
           node-version: 22
 
-      - name: Generate activity dashboard
+      - name: Test dashboard generation and recovery
+        run: node --test tests/profile-dashboard.test.mjs
+
+      - name: Generate activity dashboard (with transient-failure fallback)
+        id: generate
+        shell: bash
         env:
           GH_TOKEN: ${{ secrets.PROFILE_METRICS_TOKEN || secrets.METRICS_TOKEN || github.token }}
           PROFILE_USERNAME: ${{ github.repository_owner }}
-        run: node scripts/profile-dashboard.mjs
+        run: |
+          set +e
+          node scripts/profile-dashboard.mjs
+          status=$?
+          set -e
+          if [[ "$status" -eq 0 ]]; then
+            echo 'cache=false' >> "$GITHUB_OUTPUT"
+          elif [[ "$status" -eq 75 ]]; then
+            # Only transient GitHub API/network failures may reuse cache.
+            # Missing/corrupt cached files will still fail validation.
+            echo 'cache=true' >> "$GITHUB_OUTPUT"
+            echo '::warning::GitHub GraphQL API temporarily unavailable after retries; retaining last published dashboard.'
+            echo '### Activity dashboard: cached SVGs retained (API unavailable)' >> "$GITHUB_STEP_SUMMARY"
+            git restore --source=HEAD --worktree -- assets/dashboard
+          else
+            echo "Dashboard generation failed with exit code $status" >&2
+            exit "$status"
+          fi
 
       - name: Validate generated dashboard
         shell: bash
@@ -80,6 +103,7 @@ jobs:
           done
 
       - name: Publish dashboard
+        if: steps.generate.outputs.cache == 'false'
         shell: bash
         run: |
           set -euo pipefail

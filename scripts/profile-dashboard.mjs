@@ -16,8 +16,25 @@ fromDate.setUTCFullYear(fromDate.getUTCFullYear() - 1);
 fromDate.setUTCDate(fromDate.getUTCDate() + 1);
 const from = fromDate.toISOString();
 
-const query = `
-query ProfileDashboard($login: String!, $from: DateTime!, $to: DateTime!) {
+// Keep the calendar query separate from repository metadata so a large GraphQL
+// response cannot time out the entire dashboard in one request.
+const calendarQuery = `
+query ProfileActivity($login: String!, $from: DateTime!, $to: DateTime!) {
+  user(login: $login) {
+    contributionsCollection(from: $from, to: $to) {
+      totalCommitContributions
+      contributionCalendar {
+        totalContributions
+        weeks {
+          contributionDays { date contributionCount weekday }
+        }
+      }
+    }
+  }
+}`;
+
+const repositoriesQuery = `
+query ProfileRepositories($login: String!) {
   user(login: $login) {
     repositories(
       first: 100,
@@ -26,26 +43,7 @@ query ProfileDashboard($login: String!, $from: DateTime!, $to: DateTime!) {
       isFork: false,
       orderBy: { field: PUSHED_AT, direction: DESC }
     ) {
-      totalCount
-      nodes {
-        name
-        nameWithOwner
-        isPrivate
-        pushedAt
-      }
-    }
-    contributionsCollection(from: $from, to: $to) {
-      totalCommitContributions
-      contributionCalendar {
-        totalContributions
-        weeks {
-          contributionDays {
-            date
-            contributionCount
-            weekday
-          }
-        }
-      }
+      nodes { nameWithOwner isPrivate pushedAt }
     }
   }
   viewer {
@@ -55,43 +53,86 @@ query ProfileDashboard($login: String!, $from: DateTime!, $to: DateTime!) {
       isFork: false,
       orderBy: { field: PUSHED_AT, direction: DESC }
     ) {
-      totalCount
-      nodes {
-        name
-        nameWithOwner
-        isPrivate
-        pushedAt
-      }
+      nodes { nameWithOwner isPrivate pushedAt }
     }
   }
 }`;
 
-const response = await fetch('https://api.github.com/graphql', {
-  method: 'POST',
-  headers: {
-    authorization: `Bearer ${TOKEN}`,
-    'content-type': 'application/json',
-    'user-agent': `${USERNAME}-profile-dashboard`,
-  },
-  body: JSON.stringify({ query, variables: { login: USERNAME, from, to } }),
-});
+const transientCodes = new Set([408, 429, 500, 502, 503, 504]);
+const MAX_ATTEMPTS = 4;
+const API_TIMEOUT_MS = 25_000;
+const RETRY_BASE_MS = Number(process.env.PROFILE_RETRY_BASE_MS ?? '1500');
+// Exponential delays; GitHub's Retry-After is honored, capped to avoid
+// holding the job for hours during a rate-limit event.
+const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-if (!response.ok) {
-  console.error(`GitHub GraphQL request failed: ${response.status} ${response.statusText}`);
-  process.exit(1);
+function transientGraphQLError(errors) {
+  return errors.some((error) => {
+    const code = String(error.extensions?.code || '').toUpperCase();
+    const message = String(error.message || '');
+    return ['INTERNAL', 'INTERNAL_SERVER_ERROR', 'SERVICE_UNAVAILABLE', 'RATE_LIMITED'].includes(code)
+      || /timeout|temporarily unavailable|secondary rate limit|try again later/i.test(message);
+  });
 }
 
-const payload = await response.json();
-if (payload.errors?.length) {
-  console.error(JSON.stringify(payload.errors, null, 2));
-  process.exit(1);
+async function fetchGraphQL(query, variables, label) {
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    let retry = false;
+    let message = '';
+    let retryAfterMs = 0;
+    try {
+      const response = await fetch('https://api.github.com/graphql', {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${TOKEN}`,
+          'content-type': 'application/json',
+          'user-agent': `${USERNAME}-profile-dashboard`,
+          accept: 'application/vnd.github+json',
+        },
+        body: JSON.stringify({ query, variables }),
+        signal: AbortSignal.timeout(API_TIMEOUT_MS),
+      });
+
+      if (!response.ok) {
+        const detail = (await response.text()).slice(0, 350).replace(/\s+/g, ' ');
+        message = `${label}: GitHub GraphQL HTTP ${response.status} ${response.statusText} ${detail}`;
+        retry = transientCodes.has(response.status)
+          || (response.status === 403 && /secondary rate limit|temporarily unavailable/i.test(detail));
+        const retryHeader = Number(response.headers.get('retry-after'));
+        if (Number.isFinite(retryHeader) && retryHeader > 0) {
+          retryAfterMs = Math.min(30_000, retryHeader * 1000);
+        }
+      } else {
+        const payload = await response.json();
+        if (!payload.errors?.length && payload.data) return payload.data;
+        message = `${label}: ${JSON.stringify(payload.errors || ['GraphQL returned no data'])}`;
+        retry = !!payload.errors?.length && transientGraphQLError(payload.errors);
+      }
+    } catch (error) {
+      retry = true;
+      message = `${label}: ${error.message || String(error)}`;
+    }
+
+    if (!retry) throw new Error(message);
+    console.warn(`${message} (attempt ${attempt}/${MAX_ATTEMPTS})`);
+    if (attempt === MAX_ATTEMPTS) {
+      // EX_TEMPFAIL lets the workflow preserve the last successfully published
+      // SVGs. Authentication and schema errors still fail the workflow.
+      console.error(`TEMPORARY_GITHUB_API_FAILURE: ${label} exhausted retries.`);
+      process.exit(75);
+    }
+    const delay = Math.max(retryAfterMs, Math.max(0, RETRY_BASE_MS) * 2 ** (attempt - 1));
+    await pause(delay);
+  }
 }
 
-const user = payload.data?.user;
-if (!user) {
-  console.error(`GitHub user not found: ${USERNAME}`);
-  process.exit(1);
-}
+// Sequential small queries reduce the likelihood of GitHub GraphQL 504s.
+const activity = await fetchGraphQL(calendarQuery, { login: USERNAME, from, to }, 'activity');
+if (!activity.user) throw new Error(`GitHub user not found: ${USERNAME}`);
+const repos = await fetchGraphQL(repositoriesQuery, { login: USERNAME }, 'repositories');
+if (!repos.user) throw new Error(`GitHub user not found: ${USERNAME}`);
+const user = { ...activity.user, repositories: repos.user.repositories };
+const viewer = repos.viewer;
 
 const calendar = user.contributionsCollection?.contributionCalendar;
 if (!calendar?.weeks?.length) {
@@ -113,7 +154,7 @@ for (const repo of user.repositories?.nodes || []) {
   if (!repo?.nameWithOwner || repo.nameWithOwner === `${USERNAME}/${USERNAME}`) continue;
   repoMap.set(repo.nameWithOwner, repo);
 }
-for (const repo of payload.data?.viewer?.repositories?.nodes || []) {
+for (const repo of viewer?.repositories?.nodes || []) {
   if (!repo?.nameWithOwner || repo.nameWithOwner === `${USERNAME}/${USERNAME}`) continue;
   repoMap.set(repo.nameWithOwner, { ...repoMap.get(repo.nameWithOwner), ...repo });
 }

@@ -25,34 +25,101 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
-      - name: Generate 3D contribution landscape
+      # A 502/503/504 from api.github.com/graphql is normally temporary.
+      # Actions that use `uses:` cannot be wrapped directly in a shell loop.
+      - name: Generate 3D landscape (attempt 1)
+        id: landscape_1
+        continue-on-error: true
         uses: yoshi389111/github-profile-3d-contrib@v0.9.3
         env:
           GITHUB_TOKEN: ${{ secrets.METRICS_TOKEN || github.token }}
           USERNAME: ${{ github.repository_owner }}
 
-      - name: Validate generated landscape
+      - name: Wait before retry 2
+        if: steps.landscape_1.outcome == 'failure'
+        run: sleep 10
+
+      - name: Generate 3D landscape (attempt 2)
+        id: landscape_2
+        if: steps.landscape_1.outcome == 'failure'
+        continue-on-error: true
+        uses: yoshi389111/github-profile-3d-contrib@v0.9.3
+        env:
+          GITHUB_TOKEN: ${{ secrets.METRICS_TOKEN || github.token }}
+          USERNAME: ${{ github.repository_owner }}
+
+      - name: Wait before retry 3
+        if: steps.landscape_2.outcome == 'failure'
+        run: sleep 20
+
+      - name: Generate 3D landscape (attempt 3)
+        id: landscape_3
+        if: steps.landscape_2.outcome == 'failure'
+        continue-on-error: true
+        uses: yoshi389111/github-profile-3d-contrib@v0.9.3
+        env:
+          GITHUB_TOKEN: ${{ secrets.METRICS_TOKEN || github.token }}
+          USERNAME: ${{ github.repository_owner }}
+
+      - name: Restore last good images if GitHub API is unavailable
+        id: recovery
+        if: steps.landscape_1.outcome != 'success' && steps.landscape_2.outcome != 'success' && steps.landscape_3.outcome != 'success'
         shell: bash
         run: |
           set -euo pipefail
-          test -s profile-3d-contrib/profile-night-rainbow.svg
-          test -s profile-3d-contrib/profile-season-animate.svg
-          grep -q '<svg' profile-3d-contrib/profile-night-rainbow.svg
-          grep -q '<svg' profile-3d-contrib/profile-season-animate.svg
+          echo '::warning::GitHub contribution API failed after 3 attempts. Retaining last committed 3D images.'
+          echo '### 3D landscape: cached assets retained (API unavailable)' >> "$GITHUB_STEP_SUMMARY"
+          git restore --source=HEAD --worktree -- profile-3d-contrib
+          git clean -fd -- profile-3d-contrib
+
+      - name: Validate generated or cached landscape
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in \
+            profile-3d-contrib/profile-night-rainbow.svg \
+            profile-3d-contrib/profile-season-animate.svg; do
+            test -s "$file"
+            grep -q '<svg' "$file"
+          done
 
       - name: Publish landscape
+        if: steps.landscape_1.outcome == 'success' || steps.landscape_2.outcome == 'success' || steps.landscape_3.outcome == 'success'
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add profile-3d-contrib
 
-          if git diff --cached --quiet; then
-            echo "Contribution landscape is already current."
-            exit 0
-          fi
+          # Protect against non-fast-forward pushes from the dashboard workflow.
+          tmp_dir="$(mktemp -d)"
+          cp -a profile-3d-contrib "$tmp_dir/"
+          branch="${GITHUB_REF_NAME:-main}"
 
-          git commit -m "chore(profile): refresh contribution landscape [skip ci]"
-          git push
+          for attempt in 1 2 3; do
+            git fetch origin "$branch"
+            git reset --hard "origin/$branch"
+            mkdir -p profile-3d-contrib
+            cp -a "$tmp_dir/profile-3d-contrib/." profile-3d-contrib/
+            git add profile-3d-contrib
+
+            if git diff --cached --quiet; then
+              echo '3D landscape is already current.'
+              exit 0
+            fi
+
+            git commit -m "chore(profile): refresh contribution landscape [skip ci]"
+            if git push origin "HEAD:$branch"; then
+              echo '3D landscape published.'
+              exit 0
+            fi
+
+            echo "Remote branch changed; retrying publish ($attempt/3)."
+            sleep $((attempt * 2))
+          done
+
+          echo 'ERROR: could not publish 3D landscape after 3 attempts.' >&2
+          exit 1
